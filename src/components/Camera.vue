@@ -12,25 +12,20 @@ export default {
   data() {
     return {
       cameraIsOpen: true,
-      connection: null
+      connection: null,
+      serverURL: `ws://127.0.0.1:8000/live`,
+      webcamFrame: 'Olar!!'
     }
   },
   computed: {
     
   },
   created() {
-    console.log('Estabelecendo conexão com o servidor')
-    this.connection = new WebSocket("ws://127.0.0.1:8000/live")
-    this.connection.onopen = (event) => {
-      console.log(event)
-      console.log('Successfuly connected to the server!')
-    }
-    this.connection.onmessage = (event) => {
-      console.log(event)
-    }
-  },
+    },
   beforeMount() {
+    this.connectToServer()
     //this.init()
+    this.interval = setInterval(() => this.sendNewFrame(), 1000);
   },
   methods: {
     init() {
@@ -41,6 +36,17 @@ export default {
             videoPlayer.srcObject = stream
             videoPlayer.play()
           })
+      }
+    },
+    connectToServer() {
+      console.log('Estabelecendo conexão com o servidor')
+      this.connection = new WebSocket(this.serverURL)
+      this.connection.onopen = (event) => {
+        console.log(event)
+        console.log('Successfuly connected to the server!')
+      }
+      this.connection.onmessage = (event) => {
+        console.log(event)
       }
     },
     getConstraints() {
@@ -62,9 +68,9 @@ export default {
     closeCamera() {
 
     },
-    sendMessage(message) {
+    sendNewFrame() {
       console.log(this.connection)
-      this.connection.send(message)
+      this.connection.send(this.webcamFrame)
     }
   }
 }
