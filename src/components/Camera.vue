@@ -1,7 +1,8 @@
 <template>
     <div class="camera">
-        <video v-if="cameraIsOpen" autoplay class="feed"></video>
+        <!-- <video v-if="cameraIsOpen" autoplay class="feed"></video> -->
         <button @click="cameraIsOpen = !cameraIsOpen">Fechar câmera</button>
+        <button @click="sendMessage('Opa, toma aí a minha mensagem!')">Enviar mensagem</button>
     </div>
 </template>
 
@@ -10,11 +11,26 @@ export default {
   name: 'Camera',
   data() {
     return {
-      cameraIsOpen: true
+      cameraIsOpen: true,
+      connection: null
     }
   },
   computed: {
     
+  },
+  created() {
+    console.log('Estabelecendo conexão com o servidor')
+    this.connection = new WebSocket("ws://127.0.0.1:8000/live")
+    this.connection.onopen = (event) => {
+      console.log(event)
+      console.log('Successfuly connected to the server!')
+    }
+    this.connection.onmessage = (event) => {
+      console.log(event)
+    }
+  },
+  beforeMount() {
+    //this.init()
   },
   methods: {
     init() {
@@ -45,10 +61,11 @@ export default {
     },
     closeCamera() {
 
+    },
+    sendMessage(message) {
+      console.log(this.connection)
+      this.connection.send(message)
     }
-  },
-  beforeMount() {
-    this.init()
   }
 }
 </script>
