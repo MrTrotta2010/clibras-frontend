@@ -1,8 +1,8 @@
 <template>
     <div class="camera">
         <video v-if="cameraIsOpen" autoplay class="feed"></video>
-        <canvas v-if="cameraIsOpen" class="d-none" id="canvas" />
         <img v-else src="@/assets/no-video.png" class="no-video-img">
+        <canvas class="d-none" id="canvas" />
         <br>
         <button v-if="webcam" @click="toggleWebcam">{{ buttonTitle }}</button>
         <button v-else>{{ buttonTitle }}</button>
@@ -18,7 +18,7 @@ export default {
       webcam: null,
       connection: null,
       wsReady: false,
-      targetFPS: 30,
+      targetFPS: 15,
       serverURL: `ws://127.0.0.1:8000/live`,
     }
   },
@@ -63,11 +63,16 @@ export default {
         console.log('Successfuly connected to the server!')
       }
       this.connection.onmessage = (event) => {
-        console.log(event)
+        // const data = JSON.parse(event.data)
+        // this.receivedFrame = data.image_data
+        this.receivedFrame = event.data
       }
-      this.connection.onerror = function (error) {
+      this.connection.onerror = (error) => {
         this.wsReady = false;
         console.log('[ERROR]', error)
+      }
+      this.connection.onclose = (event) => {
+        console.log('Closed!:', event)
       }
     },
     getConstraints() {
@@ -102,7 +107,8 @@ export default {
       context.drawImage(document.querySelector('video'), 0, 0, picture.width, picture.height)
       const dataUrl = picture.toDataURL('image/png')
       return dataUrl
-    }
+    },
+    
   }
 }
 </script>
