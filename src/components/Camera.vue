@@ -1,6 +1,7 @@
 <template>
     <div class="camera">
         <video v-if="cameraIsOpen" autoplay class="feed"></video>
+        <canvas v-if="cameraIsOpen" class="d-none" id="canvas" />
         <img v-else src="@/assets/no-video.png" class="no-video-img">
         <br>
         <button v-if="webcam" @click="toggleWebcam">{{ buttonTitle }}</button>
@@ -17,8 +18,8 @@ export default {
       webcam: null,
       connection: null,
       wsReady: false,
+      targetFPS: 30,
       serverURL: `ws://127.0.0.1:8000/live`,
-      webcamFrame: 'Olar!!'
     }
   },
   computed: {
@@ -28,7 +29,7 @@ export default {
   },
   created() {
     this.connectToServer()
-    this.interval = setInterval(() => this.sendNewFrame(), 1000);
+    this.interval = setInterval(() => this.sendNewFrame(), 1000 / this.targetFPS);
   },
   beforeMount() {
     this.openWebcam()
@@ -86,10 +87,21 @@ export default {
       }
     },
     sendNewFrame() {
-      if (this.wsReady) {
-        console.log(this.connection)
-        this.connection.send(this.webcamFrame)
+      if (this.wsReady && this.cameraIsOpen) {
+        const payload = this.getVideoFrame()
+        this.connection.send(payload)
       }
+    },
+    getVideoFrame() {
+      const ratio = (window.innerHeight < window.innerWidth) ? 16 / 9 : 9 / 16 
+      const picture = document.querySelector('canvas')
+      picture.width = (window.innerWidth < 1280) ? window.innerWidth : 1280
+      picture.height = picture.width / ratio
+
+      const context = picture.getContext('2d')
+      context.drawImage(document.querySelector('video'), 0, 0, picture.width, picture.height)
+      const dataUrl = picture.toDataURL('image/png')
+      return dataUrl
     }
   }
 }
